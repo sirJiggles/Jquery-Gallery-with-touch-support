@@ -6,15 +6,16 @@ Simple JQuery gallery plugin. uses pane width to detect slide position so can us
 Example usage
 =================================
 
-`<div id="gallery-wrapper">`
-`   <ul id="gallery">`
-`       <li><img src="some/img" /></li>`
-`       <li><img src="some/img" /></li>`
-`       <li><img src="some/img" /></li>`
-`   </ul>`
-`   <a href="#" title="Next" id="next-button">Next</a>`
-`   <a href="#" title="Previous" id="previous-button">Previous</a>`
-`</div>`
+`````````html
+<div id="gallery-wrapper">
+   <ul id="gallery">
+       <li><img src="some/img" /></li>
+       <li><img src="some/img" /></li>      
+       <li><img src="some/img" /></li>
+   </ul>
+   <a href="#" title="Next" id="next-button">Next</a>
+   <a href="#" title="Previous" id="previous-button">Previous</a>
+</div>`````````
     
 `<script type="text/javascript">`
 `   $('#gallery').garethGallery();`
