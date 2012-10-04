@@ -6,7 +6,7 @@ Simple JQuery gallery plugin. uses pane width to detect slide position so can us
 Example usage
 =================================
 
-"<div>"
+<code>"<div>"</code>
 
 <ul id="gallery">
 <li><img src="some/img" /></li>
