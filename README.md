@@ -15,12 +15,14 @@ Example usage
    </ul>
    <a href="#" title="Next" id="next-button">Next</a>
    <a href="#" title="Previous" id="previous-button">Previous</a>
-</div>```
+</div>
+```
     
 ```javascript
 <script type="text/javascript">
    $('#gallery').garethGallery();
-</script>```
+</script>
+```
 
 
 Arguments
@@ -44,7 +46,8 @@ Example with argument change
   </ul>
   <a href="#" title="Next" id="next-button-new">Next</a>
   <a href="#" title="Previous" id="previous-button-new">Previous</a>
-</div>```
+</div>
+```
 
 ```javascript
 <script type="text/javascript">
@@ -52,7 +55,8 @@ Example with argument change
                                 'rightButton' : 'next-button-new',
                                 'speed' : 2000
                                 'touch' : false });
-</script>```
+</script>
+```
 
 Problems?
 ================================
