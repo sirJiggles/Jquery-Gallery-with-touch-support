@@ -55,7 +55,7 @@ Example with argument change
 <script type="text/javascript">
   $('#gallery').garethGallery({ 'leftButton' : 'previous-button-new',
                                 'rightButton' : 'next-button-new',
-                                'speed' : 2000
+                                'speed' : 2000,
                                 'touch' : false });
 </script>
 ```
