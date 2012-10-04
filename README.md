@@ -27,12 +27,14 @@ Example usage
 
 Arguments
 ==================================
-touch       - boolean (left and right touch support), default true
-speed       - transition speed, default 1000ms
-wrapper     - should not need to overide, defaults to the element that called it in the above example #gallery
-leftButton  - string id of the left / previous button, default previous-button
-rightButton - string id of the right / next button, default next-button
-autoMove    - boolean (auto move gallery, stops when user takes controll), default true
+<ul>
+<li><strong>touch</strong>       - boolean (left and right touch support), default true</li>
+<li><strong>speed</strong>       - transition speed, default 1000ms</li>
+<li><strong>wrapper</strong>     - should not need to overide, defaults to the element that called it in the above example #gallery</li>
+<li><strong>leftButton</strong>  - string id of the left / previous button, default previous-button</li>
+<li><strong>rightButton</strong> - string id of the right / next button, default next-button</li>
+<li><strong>autoMove</strong>    - boolean (auto move gallery, stops when user takes controll), default true</li>
+</ul>
 
 Example with argument change
 ================================
