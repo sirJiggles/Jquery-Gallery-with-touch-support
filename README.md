@@ -6,7 +6,7 @@ Simple JQuery gallery plugin. uses pane width to detect slide position so can us
 Example usage
 =================================
 
-`````````html
+```html
 <div id="gallery-wrapper">
    <ul id="gallery">
        <li><img src="some/img" /></li>
@@ -15,11 +15,12 @@ Example usage
    </ul>
    <a href="#" title="Next" id="next-button">Next</a>
    <a href="#" title="Previous" id="previous-button">Previous</a>
-</div>`````````
+</div>```
     
-`<script type="text/javascript">`
-`   $('#gallery').garethGallery();`
-`</script>`
+```javascript
+<script type="text/javascript">
+   $('#gallery').garethGallery();
+</script>```
 
 
 Arguments
@@ -34,7 +35,8 @@ autoMove    - boolean (auto move gallery, stops when user takes controll), defau
 Example with argument change
 ================================
 
-`<div id="gallery-wrapper">
+```html
+<div id="gallery-wrapper">
   <ul id="gallery">
     <li><img src="some/img" /></li>
     <li><img src="some/img" /></li>
@@ -42,14 +44,15 @@ Example with argument change
   </ul>
   <a href="#" title="Next" id="next-button-new">Next</a>
   <a href="#" title="Previous" id="previous-button-new">Previous</a>
-</div>`
+</div>```
 
-`<script type="text/javascript">
+```javascript
+<script type="text/javascript">
   $('#gallery').garethGallery({ 'leftButton' : 'previous-button-new',
                                 'rightButton' : 'next-button-new',
                                 'speed' : 2000
                                 'touch' : false });
-</script>`
+</script>```
 
 Problems?
 ================================
