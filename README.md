@@ -7,8 +7,7 @@ Example usage
 =================================
 
 <pre>
-  <code>
-    "<div id="gallery-wrapper">
+  <div id="gallery-wrapper">
       <ul id="gallery">
         <li><img src="some/img" /></li>
         <li><img src="some/img" /></li>
@@ -20,8 +19,7 @@ Example usage
     
     <script type="text/javascript">
       $('#gallery').garethGallery();
-    </script>"
-  </code>
+    </script>
 </pre>
 
 Arguments
