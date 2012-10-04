@@ -7,7 +7,7 @@ Example usage
 =================================
 
 <pre>
-<code>"<div>"</code>
+<code>"<div>"</code></pre>
 
 <ul id="gallery">
 <li><img src="some/img" /></li>
