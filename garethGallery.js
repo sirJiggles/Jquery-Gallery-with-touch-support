@@ -87,12 +87,7 @@
                 var touchCompletionTime = null
                 
                 $(settings['wrapper']).bind('touchstart', function(e){
-                    //work out what e is :S
-                    if(e.originalEvent.touches && e.originalEvent.touches.length) {
-                        e = e.originalEvent.touches[0];
-                    } else if(e.originalEvent.changedTouches && e.originalEvent.changedTouches.length) {
-                        e = e.originalEvent.changedTouches[0];
-                    }
+                    e = getTouchEvent(e)
                     
                     startTouchTime = new Date();
                     
@@ -109,11 +104,7 @@
                 });
                 
                 $(settings['wrapper']).bind('touchmove', function(e){
-                    if(e.originalEvent.touches && e.originalEvent.touches.length) {
-                        e = e.originalEvent.touches[0];
-                    } else if(e.originalEvent.changedTouches && e.originalEvent.changedTouches.length) {
-                        e = e.originalEvent.changedTouches[0];
-                    }
+                    e = getTouchEvent(e)
                     
                     movePosition = e.pageX;
                     
@@ -124,11 +115,7 @@
                 });
 
                 $(settings['wrapper']).bind('touchend', function(e){
-                    if(e.originalEvent.touches && e.originalEvent.touches.length) {
-                        e = e.originalEvent.touches[0];
-                    } else if(e.originalEvent.changedTouches && e.originalEvent.changedTouches.length) {
-                        e = e.originalEvent.changedTouches[0];
-                    }
+                    e = getTouchEvent(e);
                     
                     endPosition = e.pageX;
                     
@@ -168,6 +155,17 @@
                     }
                     return false; 
                 });
+                
+            }
+            
+            // Function to get touch event 
+            function getTouchEvent(e){
+                if(e.originalEvent.touches && e.originalEvent.touches.length) {
+                    e = e.originalEvent.touches[0];
+                } else if(e.originalEvent.changedTouches && e.originalEvent.changedTouches.length) {
+                    e = e.originalEvent.changedTouches[0];
+                }   
+                return e;
                 
             }
             
@@ -267,3 +265,5 @@
     
     
 })( jQuery );
+
+
