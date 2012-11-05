@@ -211,28 +211,26 @@
                         if (settings['fade']){
                             
                             fadeItem(settings['currentIndex'] + (1 * multiplier));
-                            updateCurrentIndex(settings['currentIndex'] + (1 * multiplier));
-                            
                         }else{
                             $(settings['wrapper']).animate({
                                 left: currentLeft - ( settings['paneWidth'] * multiplier) 
                             }, settings['speed'], function() {
-                               updateCurrentIndex(settings['currentIndex'] + (1 * multiplier));
                             });
                         }
+                        updateCurrentIndex(settings['currentIndex'] + (1 * multiplier));
                         
                     }else{
                         // cant move right so reset the gallery at the start
                         if(settings['fade']){
                             fadeItem(1);
-                            updateCurrentIndex(1);
                         }else{
                             $(settings['wrapper']).animate({
                                 left: 0
                             }, settings['speed'], function() {
-                                updateCurrentIndex(1);
                             });
                         }
+                        
+                        updateCurrentIndex(1);
                     }
                 }
 
@@ -245,27 +243,25 @@
                         if (settings['fade']){
                             
                             fadeItem(settings['currentIndex'] - (1 * multiplier));
-                            updateCurrentIndex(settings['currentIndex'] - (1 * multiplier));
                             
                         }else{
                             $(settings['wrapper']).animate({
                                 left: currentLeft + (settings['paneWidth'] * multiplier)
                             }, settings['speed'], function() {
-                                updateCurrentIndex(settings['currentIndex'] - (1 * multiplier));
                             }); 
                         }
-
+                        updateCurrentIndex(settings['currentIndex'] - (1 * multiplier));
                     }else{
                         if(settings['fade']){
                             fadeItem(settings['amountItems']);
-                            updateCurrentIndex(settings['amountItems']);
                         }else{
                             $(settings['wrapper']).animate({
                                 left: ( (settings['amountItems'] -1) * settings['paneWidth']) - (( (settings['amountItems'] - 1) * settings['paneWidth']) * 2)
                             }, settings['speed'], function() {
-                                updateCurrentIndex(settings['amountItems']);
                             });
                         }
+                        
+                        updateCurrentIndex(settings['amountItems']);
                     }
                 }
                 
