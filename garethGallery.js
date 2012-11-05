@@ -283,8 +283,12 @@
                 if (settings['autoMove']){
                    clearInterval(galleryTimeout); 
                 }
-                $(settings['wrapper']).css('left', 0);
-                settings['currentIndex'] = 1;
+                if (settings['fade']){
+                    fadeItem(1);
+                }else{
+                    $(settings['wrapper']).css('left', 0);
+                }
+                updateCurrentIndex(1);
             });
 
             return this;
