@@ -139,9 +139,9 @@
                     // work out if move grater than threshold, and in which direction
                     if ( (Math.abs(startPosition - endPosition) > ( settings['paneWidth'] / 3 ) ) || fastSwipe){
                         if (endPosition > startPosition){
-                            move('left');
+                            move('left', 1, true);
                         }else{
-                            move('right');
+                            move('right', 1, true);
                         }
                         if (settings['autoMove']){
                             clearInterval(galleryTimeout); 
@@ -149,16 +149,7 @@
                         endPosition = 0;
                         startPosition = 0;
                     }else{
-                        // tween pane back to where it was before the finger move!
-                        $(settings['wrapper']).animate({
-                           left: (settings['paneWidth'] * (settings['currentIndex'] - 1)) * -1 
-                        },
-                        {
-                            duration: '300',
-                            easing: 'swing',
-                            complete: function() {
-                            }
-                        });
+                       touchPaneReset();
                     }
                     return false; 
                 });
@@ -192,11 +183,22 @@
                 console.log(value);
             }
             
+            function touchPaneReset(){
+                // tween pane back to where it was before the finger move!
+                $(settings['wrapper']).animate({
+                    left: (settings['paneWidth'] * (settings['currentIndex'] - 1)) * -1 
+                }, 300);
+                
+            }
+            
             // The actual move function
-            function move(direction, multiplier){
+            function move(direction, multiplier, touch){
 
                 if (!multiplier){
                     var multiplier = 1; 
+                }
+                if(!touch){
+                    var touch = false;
                 }
                 
                 
@@ -215,22 +217,30 @@
                             $(settings['wrapper']).animate({
                                 left: currentLeft - ( settings['paneWidth'] * multiplier) 
                             }, settings['speed'], function() {
+                                
+                                //$(settings['wrapper']).find('li:first').before($(settings['wrapper']).find('li:last'));
+                                //$(settings['wrapper']).css('left', parseInt($(settings['wrapper']).css('left').replace('px', '')) - settings['paneWidth']);
+                                
                             });
                         }
                         updateCurrentIndex(settings['currentIndex'] + (1 * multiplier));
                         
                     }else{
                         // cant move right so reset the gallery at the start
-                        if(settings['fade']){
-                            fadeItem(1);
+                        if (!touch){
+                            if(settings['fade']){
+                                fadeItem(1);
+                            }else{
+                                $(settings['wrapper']).animate({
+                                    left: 0
+                                }, settings['speed'], function() {
+                                });
+                            }
+
+                            updateCurrentIndex(1);
                         }else{
-                            $(settings['wrapper']).animate({
-                                left: 0
-                            }, settings['speed'], function() {
-                            });
+                            touchPaneReset();
                         }
-                        
-                        updateCurrentIndex(1);
                     }
                 }
 
@@ -252,16 +262,21 @@
                         }
                         updateCurrentIndex(settings['currentIndex'] - (1 * multiplier));
                     }else{
-                        if(settings['fade']){
-                            fadeItem(settings['amountItems']);
-                        }else{
-                            $(settings['wrapper']).animate({
-                                left: ( (settings['amountItems'] -1) * settings['paneWidth']) - (( (settings['amountItems'] - 1) * settings['paneWidth']) * 2)
-                            }, settings['speed'], function() {
-                            });
-                        }
                         
-                        updateCurrentIndex(settings['amountItems']);
+                        if(!touch){
+                            if(settings['fade']){
+                                fadeItem(settings['amountItems']);
+                            }else{
+                                $(settings['wrapper']).animate({
+                                    left: ( (settings['amountItems'] -1) * settings['paneWidth']) - (( (settings['amountItems'] - 1) * settings['paneWidth']) * 2)
+                                }, settings['speed'], function() {
+                                });
+                            }
+
+                            updateCurrentIndex(settings['amountItems']);
+                        }else{
+                            touchPaneReset();
+                        }
                     }
                 }
                 
