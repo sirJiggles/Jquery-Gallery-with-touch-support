@@ -17,13 +17,14 @@
                 'wrapper'     : this,
                 'leftButton'  : 'previous-button',
                 'rightButton' : 'next-button',
-                'speed'       : 1000,
+                'speed'       : 500,
                 'autoMove'    : true,
                 'touch'       : true,
                 'currentIndex': 1,
                 'thumbnails'  : false,
                 'paneWidth'   : parseInt(this.children(1).css('width').replace('px', '')),
-                'amountItems' : this.children().length
+                'amountItems' : this.children().length,
+                'fade'        : false
             }, options);
             
             if (settings['autoMove']){
@@ -46,6 +47,12 @@
                 move('right');
                 return false;
             });
+            
+            if(settings['fade']){
+                // hide all items appart from active (for start)
+                $(settings['wrapper']).find('li:not(.active)').fadeOut('fast');
+                
+            }
             
             
             // Thumbnail clicking
@@ -80,7 +87,7 @@
                 
                 var startPosition = 0;
                 var endPosition = 0;
-                var currentLeft = 0;
+                var touchLeft = 0;
                 
                 // timer to work out how long the touch event occurred 
                 var startTouchTime = null;
@@ -92,13 +99,12 @@
                     startTouchTime = new Date();
                     
                     startPosition = e.pageX;
+
+                    touchLeft = parseInt($(settings['wrapper']).css('left').replace('px', ''));
                     
-                    // work out current left of the slides
-                    currentLeft = (settings['paneWidth'] * (settings['currentIndex'] - 1)) * -1;
-                    
-                    /*if ( $(settings['wrapper']).is(':animated') ) {
-                        $(settings['wrapper']).stop();
-                    };*/
+                    if ( $(settings['wrapper']).is(':animated') ) {
+                        $(settings['wrapper']).stop(true);
+                    }
  
                     return false; 
                 });
@@ -107,9 +113,8 @@
                     e = getTouchEvent(e)
                     
                     movePosition = e.pageX;
-                    
                     // Move with da finga
-                    $(settings['wrapper']).css('left', (currentLeft - (startPosition - movePosition) ) + 'px' );
+                    $(settings['wrapper']).css('left', (touchLeft - (startPosition - movePosition) ) + 'px' );
                     
                     return false; 
                 });
@@ -124,7 +129,9 @@
                     
                     // if swipe in less than 400 ms
                     if (touchCompletionTime < 400){
-                        fastSwipe = true;
+                        if(Math.abs(startPosition - endPosition) > 5){
+                            fastSwipe = true;
+                        }
                        
                     }
                     
@@ -144,7 +151,7 @@
                     }else{
                         // tween pane back to where it was before the finger move!
                         $(settings['wrapper']).animate({
-                           left: currentLeft 
+                           left: (settings['paneWidth'] * (settings['currentIndex'] - 1)) * -1 
                         },
                         {
                             duration: '300',
@@ -169,12 +176,29 @@
                 
             }
             
+            // Function to fade the gallery
+            function fadeItem(fadeToIndex){
+                var currentActive = $(settings['wrapper']).find('li.active');
+                $(currentActive).fadeOut('slow');
+                $(currentActive).removeClass('active');
+                var nextActive = $(settings['wrapper']).find('li').eq((fadeToIndex - 1));
+                nextActive.addClass('active');
+                nextActive.fadeIn('slow');
+            }
+            
+            // Function to update the current index
+            function updateCurrentIndex(value){
+                settings['currentIndex'] =  value;
+                console.log(value);
+            }
+            
             // The actual move function
             function move(direction, multiplier){
 
                 if (!multiplier){
                     var multiplier = 1; 
                 }
+                
                 
                 var currentLeft = (settings['paneWidth'] * (settings['currentIndex'] - 1)) * -1;
                 
@@ -184,18 +208,31 @@
                     // can we move right?
                     if( settings['currentIndex'] < settings['amountItems']){
                         
-                        $(settings['wrapper']).animate({
-                           left: currentLeft - ( settings['paneWidth'] * multiplier) 
-                        }, settings['speed'], function() {
-                        });
-                        settings['currentIndex'] =  settings['currentIndex'] + (1 * multiplier);
+                        if (settings['fade']){
+                            
+                            fadeItem(settings['currentIndex'] + (1 * multiplier));
+                            updateCurrentIndex(settings['currentIndex'] + (1 * multiplier));
+                            
+                        }else{
+                            $(settings['wrapper']).animate({
+                                left: currentLeft - ( settings['paneWidth'] * multiplier) 
+                            }, settings['speed'], function() {
+                               updateCurrentIndex(settings['currentIndex'] + (1 * multiplier));
+                            });
+                        }
+                        
                     }else{
                         // cant move right so reset the gallery at the start
-                        $(settings['wrapper']).animate({
-                            left: 0
-                        }, settings['speed'], function() {
-                        });
-                        settings['currentIndex'] = 1;
+                        if(settings['fade']){
+                            fadeItem(1);
+                            updateCurrentIndex(1);
+                        }else{
+                            $(settings['wrapper']).animate({
+                                left: 0
+                            }, settings['speed'], function() {
+                                updateCurrentIndex(1);
+                            });
+                        }
                     }
                 }
 
@@ -204,22 +241,31 @@
                     
                     // can we move left?
                     if( settings['currentIndex'] != 1){
-                         
-                        $(settings['wrapper']).animate({
-                            left: currentLeft + (settings['paneWidth'] * multiplier)
-                        }, settings['speed'], function() {
+                        
+                        if (settings['fade']){
                             
-                        }); 
-                        
-                        settings['currentIndex'] =  settings['currentIndex'] - (1 * multiplier);
-                       
+                            fadeItem(settings['currentIndex'] - (1 * multiplier));
+                            updateCurrentIndex(settings['currentIndex'] - (1 * multiplier));
+                            
+                        }else{
+                            $(settings['wrapper']).animate({
+                                left: currentLeft + (settings['paneWidth'] * multiplier)
+                            }, settings['speed'], function() {
+                                updateCurrentIndex(settings['currentIndex'] - (1 * multiplier));
+                            }); 
+                        }
+
                     }else{
-                        $(settings['wrapper']).animate({
-                            left: ( (settings['amountItems'] -1) * settings['paneWidth']) - (( (settings['amountItems'] - 1) * settings['paneWidth']) * 2)
-                        }, settings['speed'], function() {
-                        });
-                        
-                        settings['currentIndex'] = settings['amountItems'];
+                        if(settings['fade']){
+                            fadeItem(settings['amountItems']);
+                            updateCurrentIndex(settings['amountItems']);
+                        }else{
+                            $(settings['wrapper']).animate({
+                                left: ( (settings['amountItems'] -1) * settings['paneWidth']) - (( (settings['amountItems'] - 1) * settings['paneWidth']) * 2)
+                            }, settings['speed'], function() {
+                                updateCurrentIndex(settings['amountItems']);
+                            });
+                        }
                     }
                 }
                 
@@ -265,5 +311,3 @@
     
     
 })( jQuery );
-
-
