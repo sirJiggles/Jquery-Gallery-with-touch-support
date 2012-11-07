@@ -19,7 +19,7 @@
             currentIndex: 1,
             thumbnails  : false,
             paneWidth   : 0,
-            amountItems : $(this).children().length,
+            amountItems : 0,
             fade        : false
         };
 
@@ -27,40 +27,64 @@
     function Plugin( element, options ) {
         this.element = element;
 
-        this.options = $.extend( {}, defaults, options) ;
-        
+        this.options = $.extend( {}, defaults, options);
         this._defaults = defaults;
         this._name = pluginName;
         
+        // on resize reset the gallery
+        $(window).bind('resize', {instance:this}, function(event){
+
+            // Adjust image widths (for first load)
+            $(event.data.instance.element).find('img').css('width', $(event.data.instance.element).parent().width());
+
+            // change the pane width
+            event.data.instance.options.paneWidth = $(event.data.instance.element).parent().width();
+
+            if (event.data.instance.options.autoMove){
+                clearInterval(galleryTimeout); 
+            }
+            if (event.data.instance.options.fade){
+                fadeItem(1);
+            }else{
+                $(event.data.instance.element).css('left', 0);
+            }
+            updateCurrentIndex(event.data.instance.options, 1);
+        });
+
+         // Run that bad boy
         this.init();
+
     }
 
     Plugin.prototype.init = function () {
         
         if (this.options.autoMove){
-            galleryTimeout = setInterval(function(){move('right');}, 5000);
+            galleryTimeout = setTimeout(move(this, 'right'), 200);
         }
-            
+
         // Adjust image widths (for first load)
         $(this.element).find('img').css('width', $(this.element).parent().width());
 
         // change the pane width
         this.options.paneWidth = $(this.element).parent().width();
+        
+        // set the amount of items
+        this.options.amountItems = $(this.element).children().length;
 
         // Add click events for the next and previous buttons
-        $('#'+this.options.leftButton).bind('click', {pluginOptions: this.options}, function(event){
-            if (event.data.pluginOptions.autoMove){
+        $('#'+this.options.leftButton).bind('click', {instance: this}, function(event){
+            if (event.data.instance.options.autoMove){
                 clearInterval(galleryTimeout); 
             }
-            move('left');
+            move(event.data.instance, 'left');
             return false;
 
         });
-        $('#'+this.options.rightButton).bind('click', {pluginOptions: this.options}, function(event){
-            if (event.data.pluginOptions.autoMove){
+        $('#'+this.options.rightButton).bind('click', {instance: this}, function(event){
+            if (event.data.instance.options.autoMove){
                 clearInterval(galleryTimeout); 
             }
-            move('right');
+            move(event.data.instance, 'right');
             return false;
         });
 
@@ -74,20 +98,20 @@
         // Thumbnail clicking
         if (this.options.thumbnails){
 
-            $('#'+this.options.thumbnails).find('a').bind('click', {pluginOptions: this.options}, function(event){
+            $('#'+this.options.thumbnails).find('a').bind('click', {instance: this}, function(event){
 
                 clearInterval(galleryTimeout); 
 
-                var currentActive = $('#'+event.data.pluginOptions.thumbnails).find('.active');
-
+                var currentActive = $(this).parent().parent().find('.active');
+                
                 var diff =  Math.abs($(this).parent().index() - $(currentActive).index());
 
                 if (diff != 0){
 
                     if( $(this).parent().index() > $(currentActive).index()){
-                        move('right', diff);
+                        move(event.data.instance, 'right', diff);
                     }else{
-                        move('left', diff);
+                        move(event.data.instance, 'left', diff);
                     }
 
                 }
@@ -110,33 +134,33 @@
             var startTouchTime = null;
             var touchCompletionTime = null
 
-            $(this.element).bind('touchstart', {pluginObject: this}, function(event){
+            $(this.element).bind('touchstart', {instance: this}, function(event){
                 var e = getTouchEvent(event)
 
                 startTouchTime = new Date();
 
                 startPosition = e.pageX;
 
-                touchLeft = parseInt($(event.data.pluginObject.element).css('left').replace('px', ''));
+                touchLeft = parseInt($(event.data.instance.element).css('left').replace('px', ''));
 
-                if ( $(event.data.pluginObject.element).is(':animated') ) {
-                    $(event.data.pluginObject.element).stop(true);
+                if ( $(event.data.instance.element).is(':animated') ) {
+                    $(event.data.instance.element).stop(true);
                 }
 
                 return false; 
             });
 
-            $(this.element).bind('touchmove', {pluginObject: this}, function(event){
+            $(this.element).bind('touchmove', {instance: this}, function(event){
                 var e = getTouchEvent(event);
 
                 movePosition = e.pageX;
                 // Move with da finga
-                $(event.data.pluginObject.element).css('left', (touchLeft - (startPosition - movePosition) ) + 'px' );
+                $(event.data.instance.element).css('left', (touchLeft - (startPosition - movePosition) ) + 'px' );
 
                 return false; 
             });
 
-            $(this.element).bind('touchend', {pluginOptions: this.options}, function(event){
+            $(this.element).bind('touchend', {instance: this}, function(event){
                 var e = getTouchEvent(event);
 
                 endPosition = e.pageX;
@@ -154,176 +178,26 @@
 
 
                 // work out if move grater than threshold, and in which direction
-                if ( (Math.abs(startPosition - endPosition) > ( event.data.pluginOptions.paneWidth / 3 ) ) || fastSwipe){
+                if ( (Math.abs(startPosition - endPosition) > ( event.data.instance.options.paneWidth / 3 ) ) || fastSwipe){
                     if (endPosition > startPosition){
-                        move('left', 1, true);
+                        move(event.data.instance, 'left', 1, true);
                     }else{
-                        move('right', 1, true);
+                        move(event.data.instance, 'right', 1, true);
                     }
-                    if (event.data.pluginOptions.autoMove){
+                    if (event.data.instance.options.autoMove){
                         clearInterval(galleryTimeout); 
                     }
                     endPosition = 0;
                     startPosition = 0;
                 }else{
-                    touchPaneReset();
+                    touchPaneReset(event.data.instance);
                 }
                 return false; 
             });
 
         }
 
-        // Function to get touch event 
-        function getTouchEvent(e){
-            if(e.originalEvent.touches && e.originalEvent.touches.length) {
-                e = e.originalEvent.touches[0];
-            } else if(e.originalEvent.changedTouches && e.originalEvent.changedTouches.length) {
-                e = e.originalEvent.changedTouches[0];
-            }   
-            return e;
-
-        }
-            
-        // Function to fade the gallery
-        function fadeItem(fadeToIndex){
-            var currentActive = $(this.element).find('li.active');
-            $(currentActive).fadeOut('slow');
-            $(currentActive).removeClass('active');
-            var nextActive = $(this.element).find('li').eq((fadeToIndex - 1));
-            nextActive.addClass('active');
-            nextActive.fadeIn('slow');
-        }
-
-        // Function to update the current index
-        function updateCurrentIndex(value){
-            this.options.currentIndex =  value;
-        }
-
-        function touchPaneReset(){
-            // tween pane back to where it was before the finger move!
-            $(this.element).animate({
-                left: (this.options.paneWidth * (this.options.currentIndex - 1)) * -1 
-            }, 300);
-
-        }
-
-        // The actual move function
-        function move(direction, multiplier, touch){
-
-            if (!multiplier){var multiplier = 1; }
-            if(!touch){var touch = false;}
-
-
-            var currentLeft = (this.options.paneWidth * (this.options.currentIndex - 1)) * -1;
-
-            // Handle right click
-            if (direction == 'right'){
-
-                // can we move right?
-                if( this.options.currentIndex < this.options.amountItems){
-
-                    if (this.options.fade){
-
-                        fadeItem(this.options.currentIndex + (1 * multiplier));
-                    }else{
-                        $(this.element).animate({
-                            left: currentLeft - ( this.options.paneWidth * multiplier) 
-                        }, this.options.speed, function() {
-
-                            //$(settings.wrapper).find('li:first').before($(settings.wrapper).find('li:last'));
-                            //$(settings.wrapper).css('left', parseInt($(settings.wrapper).css('left').replace('px', '')) - settings.paneWidth);
-
-                        });
-                    }
-                    updateCurrentIndex(this.options.currentIndex + (1 * multiplier));
-
-                }else{
-                    // cant move right so reset the gallery at the start
-                    if (!touch){
-                        if(this.options.fade){
-                            fadeItem(1);
-                        }else{
-                            $(this.element).animate({
-                                left: 0
-                            }, this.options.speed, function() {
-                            });
-                        }
-
-                        updateCurrentIndex(1);
-                    }else{
-                        touchPaneReset();
-                    }
-                }
-            }
-
-            // Handle left move
-            if (direction == 'left'){
-
-                // can we move left?
-                if( this.options.currentIndex != 1){
-
-                    if (this.options.fade){
-
-                        fadeItem(this.options.currentIndex - (1 * multiplier));
-
-                    }else{
-                        $(this.element).animate({
-                            left: currentLeft + (this.options.paneWidth * multiplier)
-                        }, this.options.speed, function() {
-                        }); 
-                    }
-                    updateCurrentIndex(this.options.currentIndex - (1 * multiplier));
-                }else{
-
-                    if(!touch){
-                        if(this.options.fade){
-                            fadeItem(this.options.amountItems);
-                        }else{
-                            $(this.element).animate({
-                                left: ( (this.options.amountItems -1) * this.options.paneWidth) - (( (this.options.amountItems - 1) * this.options.paneWidth) * 2)
-                            }, this.options.speed, function() {
-                            });
-                        }
-
-                        updateCurrentIndex(this.options.amountItems);
-                    }else{
-                        touchPaneReset();
-                    }
-                }
-            }
-
-            // move active class on thumbs
-            if (this.options.thumbnails){
-                var currentActiveThumb = $(this.options.thumbnails).find('.active');
-                $(currentActiveThumb).removeClass('active');
-                $('#'+this.options.thumbnails).find('li').eq((this.options.currentIndex - 1)).addClass('active');
-            }
-        }
-
-        // on resize reset the gallery
-        $(window).resize(function() {
-            
-            console.log(this);
-            // Adjust image widths (for first load)
-            $(this.element).find('img').css('width', $(this.element).parent().width());
-
-            // change the pane width
-            this.options.paneWidth = $(this.element).parent().width();
-
-            if (this.options.autoMove){
-                clearInterval(galleryTimeout); 
-            }
-            if (this.options.fade){
-                fadeItem(1);
-            }else{
-                $(this.element).css('left', 0);
-            }
-            updateCurrentIndex(1);
-        });
-
-        
     };
-
 
     $.fn[pluginName] = function ( options ) {
         return this.each(function () {
@@ -333,6 +207,134 @@
             }
         });
     }
+    
+    
+    // The actual move function
+    function move(pluginInstance, direction, multiplier, touch){
+        if(typeof(multiplier)==='undefined') multiplier = 1;
+        if(typeof(touch)==='undefined') touch = false;
+
+        var currentLeft = (pluginInstance.options.paneWidth * (pluginInstance.options.currentIndex - 1)) * -1;
+
+        // Handle right click
+        if (direction == 'right'){
+
+            // can we move right?
+            if( pluginInstance.options.currentIndex < pluginInstance.options.amountItems){
+
+                if (pluginInstance.options.fade){
+
+                    fadeItem(pluginInstance.options.currentIndex + (1 * multiplier));
+                }else{
+                    $(pluginInstance.element).animate({
+                        left: currentLeft - ( pluginInstance.options.paneWidth * multiplier) 
+                    }, pluginInstance.options.speed, function() {
+
+                        //$(settings.wrapper).find('li:first').before($(settings.wrapper).find('li:last'));
+                        //$(settings.wrapper).css('left', parseInt($(settings.wrapper).css('left').replace('px', '')) - settings.paneWidth);
+
+                    });
+                }
+                updateCurrentIndex(pluginInstance.options, pluginInstance.options.currentIndex + (1 * multiplier));
+
+            }else{
+                // cant move right so reset the gallery at the start
+                if (!touch){
+                    if(pluginInstance.options.fade){
+                        fadeItem(1);
+                    }else{
+                        $(pluginInstance.element).animate({
+                            left: 0
+                        }, pluginInstance.options.speed, function() {
+                        });
+                    }
+
+                    updateCurrentIndex(pluginInstance.options, 1);
+                }else{
+                    touchPaneReset(pluginInstance);
+                }
+            }
+        }
+
+        // Handle left move
+        if (direction == 'left'){
+
+            // can we move left?
+            if( pluginInstance.options.currentIndex != 1){
+
+                if (pluginInstance.options.fade){
+
+                    fadeItem(pluginInstance.options.currentIndex - (1 * multiplier));
+
+                }else{
+                    $(pluginInstance.element).animate({
+                        left: currentLeft + (pluginInstance.options.paneWidth * multiplier)
+                    }, pluginInstance.options.speed, function() {
+                    }); 
+                }
+                updateCurrentIndex(pluginInstance.options, pluginInstance.options.currentIndex - (1 * multiplier));
+            }else{
+
+                if(!touch){
+                    if(pluginInstance.options.fade){
+                        fadeItem(pluginInstance.options.amountItems);
+                    }else{
+                        $(pluginInstance.element).animate({
+                            left: ( (pluginInstance.options.amountItems -1) * pluginInstance.options.paneWidth) - (( (pluginInstance.options.amountItems - 1) * pluginInstance.options.paneWidth) * 2)
+                        }, pluginInstance.options.speed, function() {
+                        });
+                    }
+
+                    updateCurrentIndex(pluginInstance.options, pluginInstance.options.amountItems);
+                }else{
+                    touchPaneReset(pluginInstance);
+                }
+            }
+        }
+
+        // move active class on thumbs
+        if (pluginInstance.options.thumbnails){
+            var currentActiveThumb = $('#'+pluginInstance.options.thumbnails).find('.active');
+            $(currentActiveThumb).removeClass('active');
+            $('#'+pluginInstance.options.thumbnails).find('li').eq((pluginInstance.options.currentIndex - 1)).addClass('active');
+        }
+    } // End of the move function
+    
+    
+    // Function to get touch event 
+    function getTouchEvent(e){
+        if(e.originalEvent.touches && e.originalEvent.touches.length) {
+            e = e.originalEvent.touches[0];
+        } else if(e.originalEvent.changedTouches && e.originalEvent.changedTouches.length) {
+            e = e.originalEvent.changedTouches[0];
+        }   
+        return e;
+
+    }
+            
+    // Function to fade the gallery
+    function fadeItem(fadeToIndex){
+        var currentActive = $(this.element).find('li.active');
+        $(currentActive).fadeOut('slow');
+        $(currentActive).removeClass('active');
+        var nextActive = $(this.element).find('li').eq((fadeToIndex - 1));
+        nextActive.addClass('active');
+        nextActive.fadeIn('slow');
+    }
+
+    // Function to update the current index
+    function updateCurrentIndex(options, value){
+        options.currentIndex = value;
+    }
+
+    function touchPaneReset(instance){
+        // tween pane back to where it was before the finger move!
+        $(instance.element).animate({
+            left: (instance.options.paneWidth * (instance.options.currentIndex - 1)) * -1 
+        }, 300);
+
+    }
+
 
 })( jQuery, window, document );
 
