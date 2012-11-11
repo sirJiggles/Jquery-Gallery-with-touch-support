@@ -19,7 +19,8 @@
             thumbnails  : false,
             thumbLeft   : 'thumbnail-left',
             thumbRight  : 'thumbnail-right',
-            fade        : false
+            fade        : false,
+            swapImages  : false
         };
 
     // The actual plugin constructor
@@ -40,23 +41,40 @@
         this.thumbWidth = 0;
         this.thumbsPerPane = 0;
         this.amountThumbPanes = 0;
+        this.totalThumbs = 0;
+        
+        // var for swapping images
+        this.imagesSwapped = false;
+        
+        // used to pass instance to timers :(
+        var instance = this;
             
         // Only run thumbs calculation after load (widths will not be avluated yet you see ;) )
         $(window).bind('load', {instance:this}, function(event){
             // calculate the thumbnail values if we are using thumbs
             if(event.data.instance.options.thumbnails){
+                event.data.instance.totalThumbs = $('#'+event.data.instance.options.thumbnails).children().length;
                 event.data.instance.thumbWidth = $('#'+event.data.instance.options.thumbnails).children(0).outerWidth(true);
                 event.data.instance.thumbsPerPane = Math.floor($('#'+event.data.instance.options.thumbnails).parent().width() / event.data.instance.thumbWidth);
                 // How many 'large' panes do we now have
-                event.data.instance.amountThumbPanes = Math.ceil($('#'+event.data.instance.options.thumbnails).children().length / event.data.instance.thumbsPerPane);
+                event.data.instance.amountThumbPanes = Math.ceil(event.data.instance.totalThumbs / event.data.instance.thumbsPerPane);
+            }
+            
+            //check to swap the images
+            if(event.data.instance.swapImages){
+                if (($(this).height() > 550) && ($(this).width() > 550)){
+                    // swap images set flag
+                    event.data.instance.swapImages();
+                }
             }
             
         });
         
         if (this.options.autoMove){
-            var instance = this;
             this.galleryTimeout = setInterval(function(){instance.move();}, 4000);
         }
+        
+        var resizeDone = 0;
         
         // on resize reset the gallery
         $(window).bind('resize', {instance:this}, function(event){
@@ -73,7 +91,9 @@
             }
             // reset the main gallery (and curent index)
             if (event.data.instance.options.fade){
-                event.data.instance.fadeItem(1);
+                // have to try to do the fade-reset after a certain amount of time
+                clearTimeout(resizeDone);
+                resizeDone = setTimeout(function(){instance.fadeItem();}, 1500);
             }else{
                 $(event.data.instance.element).css('left', 0);
             }
@@ -81,15 +101,30 @@
             
             // reset thumbnails
             if (event.data.instance.options.thumbnails){
+                
                 event.data.instance.thumbIndex = 1;
                 $('#'+event.data.instance.options.thumbnails).css('left', 0);
+                
+                // reset the active state
+                $('#'+event.data.instance.options.thumbnails).find('.active').removeClass('active');
+                $('#'+event.data.instance.options.thumbnails).find('li').eq(0).addClass('active');
                 
                 // re-calculate the thumbnail params!
                 event.data.instance.thumbWidth = $('#'+event.data.instance.options.thumbnails).children(0).outerWidth(true);
                 event.data.instance.thumbsPerPane = Math.floor($('#'+event.data.instance.options.thumbnails).parent().width() / event.data.instance.thumbWidth);
                 // How many 'large' panes do we now have
-                event.data.instance.amountThumbPanes = Math.ceil($('#'+event.data.instance.options.thumbnails).children().length / event.data.instance.thumbsPerPane);
+                event.data.instance.amountThumbPanes = Math.ceil(event.data.instance.totalThumbs / event.data.instance.thumbsPerPane);
                 
+            }
+            
+            // Image swapping
+            if(event.data.instance.swapImages){
+                if (!event.data.instance.imagesSwapped){
+                    if (($(this).height() > 550) && ($(this).width() > 550)){
+                        // swap images set flag
+                        event.data.instance.swapImages();
+                    }
+                }
             }
             
         });
@@ -147,9 +182,9 @@
                 if (diff != 0){
 
                     if( $(this).parent().index() > $(currentActive).index()){
-                        event.data.instance.move('right', diff);
+                        event.data.instance.move('right', diff, false, true);
                     }else{
-                        event.data.instance.move('left', diff);
+                        event.data.instance.move('left', diff, false, true);
                     }
 
                 }
@@ -179,18 +214,28 @@
         // Touch events (if enabled)
         if (this.options.touch){
             
-            this.addTouchSupport(this.element);
+            this.addTouchSupport(this.element, false);
             
             // touch support or the thumbnails
             if (this.options.thumbnails){
-                this.addTouchSupport( '#'+this.options.thumbnails);
+                this.addTouchSupport('#'+this.options.thumbnails, true);
             }
         }
 
     };
     
-    // function for touch support
-    Plugin.prototype.addTouchSupport = function(element){
+    Plugin.prototype.swapImages = function(){
+        // swap gallery images
+        $(this.element).find('img').each(function() {
+            $(this).attr('src', $(this).attr('data-high-res'));
+        });
+        this.imagesSwapped = true;
+    }
+    
+    // function for touch support (this is for both the main gallery and possibly thumnail pannels)
+    Plugin.prototype.addTouchSupport = function(element, thumbs){
+        
+        if(typeof(thumbs)==='undefined') thumbs = false;
         
         var startPosition = 0;
         var endPosition = 0;
@@ -212,15 +257,16 @@
             return false; 
         });
 
-        // move for the gallery
-        $(element).bind('touchmove', function(event){
-            var e = getTouchEvent(event);
-            var movePosition = e.pageX;
-            // Move with da finga
-            $(element).css('left', (touchLeft - (startPosition - movePosition) ) + 'px' );
-            return false; 
-        });
-
+        // move for the gallery (but for fade gallery dont move main gallery with finger)
+        if(thumbs || !this.options.fade){
+            $(element).bind('touchmove', function(event){
+                var e = getTouchEvent(event);
+                var movePosition = e.pageX;
+                // Move with da finga
+                $(element).css('left', (touchLeft - (startPosition - movePosition) ) + 'px' );
+                return false; 
+            });
+        }
 
         // touch end for the gallery
         $(element).bind('touchend', {instance:this}, function(event){
@@ -234,20 +280,41 @@
                     fastSwipe = true;
                 }
             }
-            // work out if move grater than threshold, and in which direction
-            if ( (Math.abs(startPosition - endPosition) > ( event.data.instance.paneWidth / 3 ) ) || fastSwipe){
-                if (endPosition > startPosition){
-                    event.data.instance.move('left', 1, true);
+            
+            // default touch desision making (for one big pannel)
+            if (!thumbs){
+                // work out if move grater than threshold, and in which direction
+                if ( (Math.abs(startPosition - endPosition) > ( event.data.instance.paneWidth / 3 ) ) || fastSwipe){
+                    if (endPosition > startPosition){
+                        event.data.instance.move('left', 1, true);
+                    }else{
+                        event.data.instance.move('right', 1, true);
+                    }
+                    if (event.data.instance.options.autoMove){
+                        clearInterval(event.data.instance.galleryTimeout); 
+                    }
+                    endPosition = 0;
+                    startPosition = 0;
                 }else{
-                    event.data.instance.move('right', 1, true);
+                    touchPaneReset(event.data.instance);
                 }
-                if (event.data.instance.options.autoMove){
-                    clearInterval(event.data.instance.galleryTimeout); 
-                }
-                endPosition = 0;
-                startPosition = 0;
             }else{
-                touchPaneReset(this);
+                // thumbs is different as there are many items wraped in 'large' pannels
+                if ( (Math.abs(startPosition - endPosition) > ( (event.data.instance.thumbWidth * event.data.instance.thumbsPerPane) / 3) ) || fastSwipe ){
+                    if (endPosition > startPosition){
+                        event.data.instance.moveThumbs('left', true);
+                    }else{
+                        event.data.instance.moveThumbs('right', true);
+                    }
+                    if (event.data.instance.options.autoMove){
+                        clearInterval(event.data.instance.galleryTimeout); 
+                    }
+                    endPosition = 0;
+                    startPosition = 0;
+                }else{
+                    touchPaneReset(event.data.instance, true);
+                }
+                
             }
             return false; 
         });
@@ -282,15 +349,14 @@
                 this.thumbIndex ++;
             }else{
                 if (!touch){
-                     $('#'+this.options.thumbnails).animate({
-                    left: 0
+                    $('#'+this.options.thumbnails).animate({
+                        left: 0
                     }, this.options.speed, function(){ 
                     });
                     this.thumbIndex = 1;
                 }else{
                     touchPaneReset(this, true);
                 }
-               
             }
         }
         
@@ -314,21 +380,22 @@
                    touchPaneReset(this, true);
                }
             }
-            
         }
-        
-        
     }
     
     
     // The actual move function
-    Plugin.prototype.move = function(direction, multiplier, touch){
+    Plugin.prototype.move = function(direction, multiplier, touch, thumbClick){
         
         if(typeof(direction)==='undefined') direction = 'right';
         if(typeof(multiplier)==='undefined') multiplier = 1;
         if(typeof(touch)==='undefined') touch = false;
-
+        if(typeof(thumbClick)==='undefined') thumbClick = false;
+        
         var currentLeft = (this.paneWidth * (this.currentIndex - 1)) * -1;
+        // boolean this as index changes and becomes a pain (sort later)
+        var cantMoveRight = false;
+        var cantMoveLeft = false;
 
         // Handle right click
         if (direction == 'right'){
@@ -343,15 +410,12 @@
                     $(this.element).animate({
                         left: currentLeft - ( this.paneWidth * multiplier) 
                     }, this.options.speed, function() {
-
-                        //$(settings.wrapper).find('li:first').before($(settings.wrapper).find('li:last'));
-                        //$(settings.wrapper).css('left', parseInt($(settings.wrapper).css('left').replace('px', '')) - settings.paneWidth);
-
                     });
                 }
                 this.currentIndex = this.currentIndex + (1 * multiplier);
 
             }else{
+               
                 // cant move right so reset the gallery at the start
                 if (!touch){
                     if(this.options.fade){
@@ -362,7 +426,7 @@
                         }, this.options.speed, function() {
                         });
                     }
-
+                    cantMoveRight = true;
                     this.currentIndex = 1;
                 }else{
                     touchPaneReset(this);
@@ -388,7 +452,7 @@
                 }
                 this.currentIndex = this.currentIndex - (1 * multiplier)
             }else{
-
+                
                 if(!touch){
                     if(this.options.fade){
                         this.fadeItem(this.amountItems);
@@ -398,6 +462,7 @@
                         }, this.options.speed, function() {
                         });
                     }
+                    cantMoveLeft = true;
                     this.currentIndex = this.amountItems;
                 }else{
                     touchPaneReset(this);
@@ -407,9 +472,29 @@
 
         // move active class on thumbs
         if (this.options.thumbnails){
+            
             var currentActiveThumb = $('#'+this.options.thumbnails).find('.active');
             $(currentActiveThumb).removeClass('active');
             $('#'+this.options.thumbnails).find('li').eq((this.currentIndex - 1)).addClass('active');
+            
+            //thumbnails get clicked on touch move, this messes with the automove functionality for the thumbs
+            if (!thumbClick){
+            
+                if (cantMoveRight || cantMoveLeft){
+                    if (cantMoveRight){this.moveThumbs('right');}
+                    if (cantMoveLeft){this.moveThumbs('left');}
+                }else{
+                    // if the current active thumb is in the active pannel check (auto move the thumbs if not)
+                    var newPaneNumber = Math.ceil(this.currentIndex / this.thumbsPerPane);
+                    if (newPaneNumber != this.thumbIndex){
+                        if (newPaneNumber > this.thumbIndex){
+                            this.moveThumbs('right');
+                        }else{
+                            this.moveThumbs('left');
+                        }
+                    }
+                }
+            }
         }
     } // End of the move function
     
@@ -422,32 +507,34 @@
             e = e.originalEvent.changedTouches[0];
         }   
         return e;
-
     }
             
     // Function to fade the gallery
     Plugin.prototype.fadeItem = function(fadeToIndex){
+        if(typeof(fadeToIndex)==='undefined') fadeToIndex = 1;
         var currentActive = $(this.element).find('li.active');
-        $(currentActive).fadeOut('slow');
+        $(currentActive).fadeOut(this.options.speed);
         $(currentActive).removeClass('active');
         var nextActive = $(this.element).find('li').eq((fadeToIndex - 1));
         nextActive.addClass('active');
-        nextActive.fadeIn('slow');
+        nextActive.fadeIn(this.options.speed);
     }
 
 
     function touchPaneReset(instance, thumbs){
         if(typeof(thumbs)==='undefined') thumbs = false;
         if (!thumbs){
-            // tween pane back to where it was before the finger move!
-            $(instance.element).animate({
-                left: (instance.paneWidth * (instance.currentIndex - 1)) * -1 
-            }, 300);
+            if (!instance.options.fade){
+                // tween pane back to where it was before the finger move!
+                $(instance.element).animate({
+                    left: (instance.paneWidth * (instance.currentIndex - 1)) * -1 
+                }, 300);
+            }
         }else{
             //double check 
             if (instance.options.thumbnails){
                 $('#'+instance.options.thumbnails).animate({
-                    left: ((this.thumbWidth * this.thumbsPerPane) * (this.thumbIndex - 1)) * -1
+                    left: ((instance.thumbWidth * instance.thumbsPerPane) * (instance.thumbIndex - 1)) * -1
                 }, 300);
                 
             } //end if options set
