@@ -254,7 +254,12 @@
             if ( $(element).is(':animated') ) {
                 $(element).stop(true);
             }
-            return false; 
+            
+            // cannot prvent default on thumbs, this stops click event!
+            if (!thumbs){
+                return false; 
+            }
+            
         });
 
         // move for the gallery (but for fade gallery dont move main gallery with finger)
@@ -264,7 +269,11 @@
                 var movePosition = e.pageX;
                 // Move with da finga
                 $(element).css('left', (touchLeft - (startPosition - movePosition) ) + 'px' );
-                return false; 
+               
+                // cannot prvent default on thumbs, this stops click event!
+                if (!thumbs){
+                    return false; 
+                }
             });
         }
 
@@ -316,7 +325,10 @@
                 }
                 
             }
-            return false; 
+            // cannot prvent default on thumbs, this stops click event!
+            if (!thumbs){
+                return false; 
+            }
         });
     }
 
