@@ -16,12 +16,9 @@
             speed       : 500,
             autoMove    : true,
             touch       : true,
-            currentIndex: 1,
             thumbnails  : false,
             thumbLeft   : 'thumbnail-left',
             thumbRight  : 'thumbnail-right',
-            paneWidth   : 0,
-            amountItems : 0,
             fade        : false
         };
 
@@ -33,6 +30,34 @@
         this._defaults = defaults;
         this._name = pluginName;
         
+        // define the global vars used by the plugin
+        this.currentIndex = 1;
+        this.thumbIndex = 1;
+        this.paneWidth = 0;
+        this.amountItems = 0;
+        
+        // some vars for the thumbnail functionality
+        this.thumbWidth = 0;
+        this.thumbsPerPane = 0;
+        this.amountThumbPanes = 0;
+            
+        // Only run thumbs calculation after load (widths will not be avluated yet you see ;) )
+        $(window).bind('load', {instance:this}, function(event){
+            // calculate the thumbnail values if we are using thumbs
+            if(event.data.instance.options.thumbnails){
+                event.data.instance.thumbWidth = $('#'+event.data.instance.options.thumbnails).children(0).outerWidth(true);
+                event.data.instance.thumbsPerPane = Math.floor($('#'+event.data.instance.options.thumbnails).parent().width() / event.data.instance.thumbWidth);
+                // How many 'large' panes do we now have
+                event.data.instance.amountThumbPanes = Math.ceil($('#'+event.data.instance.options.thumbnails).children().length / event.data.instance.thumbsPerPane);
+            }
+            
+        });
+        
+        if (this.options.autoMove){
+            var instance = this;
+            this.galleryTimeout = setInterval(function(){instance.move();}, 4000);
+        }
+        
         // on resize reset the gallery
         $(window).bind('resize', {instance:this}, function(event){
 
@@ -40,17 +65,33 @@
             $(event.data.instance.element).find('img').css('width', $(event.data.instance.element).parent().width());
 
             // change the pane width
-            event.data.instance.options.paneWidth = $(event.data.instance.element).parent().width();
-
+            event.data.instance.paneWidth = $(event.data.instance.element).parent().width();
+            
+            // clear the timer
             if (event.data.instance.options.autoMove){
-                clearInterval(galleryTimeout); 
+                clearInterval(event.data.instance.galleryTimeout); 
             }
+            // reset the main gallery (and curent index)
             if (event.data.instance.options.fade){
-                this.fadeItem(1);
+                event.data.instance.fadeItem(1);
             }else{
                 $(event.data.instance.element).css('left', 0);
             }
-            event.data.instance.options.currentIndex = 1;
+            event.data.instance.currentIndex = 1;
+            
+            // reset thumbnails
+            if (event.data.instance.options.thumbnails){
+                event.data.instance.thumbIndex = 1;
+                $('#'+event.data.instance.options.thumbnails).css('left', 0);
+                
+                // re-calculate the thumbnail params!
+                event.data.instance.thumbWidth = $('#'+event.data.instance.options.thumbnails).children(0).outerWidth(true);
+                event.data.instance.thumbsPerPane = Math.floor($('#'+event.data.instance.options.thumbnails).parent().width() / event.data.instance.thumbWidth);
+                // How many 'large' panes do we now have
+                event.data.instance.amountThumbPanes = Math.ceil($('#'+event.data.instance.options.thumbnails).children().length / event.data.instance.thumbsPerPane);
+                
+            }
+            
         });
 
          // Run that bad boy
@@ -60,24 +101,19 @@
 
     Plugin.prototype.init = function () {
         
-        if (this.options.autoMove){
-            var instance = this;
-            galleryTimeout = setInterval(function(){instance.move();}, 4000);
-        }
-
         // Adjust image widths (for first load)
         $(this.element).find('img').css('width', $(this.element).parent().width());
 
         // change the pane width
-        this.options.paneWidth = $(this.element).parent().width();
+        this.paneWidth = $(this.element).parent().width();
         
         // set the amount of items
-        this.options.amountItems = $(this.element).children().length;
+        this.amountItems = $(this.element).children().length;
 
         // Add click events for the next and previous buttons
         $('#'+this.options.leftButton).bind('click', {instance: this}, function(event){
             if (event.data.instance.options.autoMove){
-                clearInterval(galleryTimeout); 
+                clearInterval(event.data.instance.galleryTimeout); 
             }
             event.data.instance.move('left');
             return false;
@@ -85,7 +121,7 @@
         });
         $('#'+this.options.rightButton).bind('click', {instance: this}, function(event){
             if (event.data.instance.options.autoMove){
-                clearInterval(galleryTimeout); 
+                clearInterval(event.data.instance.galleryTimeout); 
             }
             event.data.instance.move('right');
             return false;
@@ -102,7 +138,7 @@
             // Thumbnail clicking
             $('#'+this.options.thumbnails).find('a').bind('click', {instance: this}, function(event){
 
-                clearInterval(galleryTimeout); 
+                window.clearInterval(event.data.instance.galleryTimeout); 
 
                 var currentActive = $(this).parent().parent().find('.active');
                 
@@ -123,7 +159,7 @@
             // Thumbnail next and previous button clicking
             $('#'+this.options.thumbLeft).bind('click', {instance: this}, function(event){
                 if (event.data.instance.options.autoMove){
-                    clearInterval(galleryTimeout); 
+                    clearInterval(event.data.instance.galleryTimeout); 
                 }
                 event.data.instance.moveThumbs('left');
                 return false;
@@ -131,7 +167,7 @@
             });
             $('#'+this.options.thumbRight).bind('click', {instance: this}, function(event){
                 if (event.data.instance.options.autoMove){
-                    clearInterval(galleryTimeout); 
+                    clearInterval(event.data.instance.galleryTimeout); 
                 }
                 event.data.instance.moveThumbs('right');
                 return false;
@@ -142,79 +178,80 @@
             
         // Touch events (if enabled)
         if (this.options.touch){
-
-            var startPosition = 0;
-            var endPosition = 0;
-            var touchLeft = 0;
-
-            // timer to work out how long the touch event occurred 
-            var startTouchTime = null;
-            var touchCompletionTime = null
-
-            $(this.element).bind('touchstart', {instance: this}, function(event){
-                var e = getTouchEvent(event)
-
-                startTouchTime = new Date();
-
-                startPosition = e.pageX;
-
-                touchLeft = parseInt($(event.data.instance.element).css('left').replace('px', ''));
-
-                if ( $(event.data.instance.element).is(':animated') ) {
-                    $(event.data.instance.element).stop(true);
-                }
-
-                return false; 
-            });
-
-            $(this.element).bind('touchmove', {instance: this}, function(event){
-                var e = getTouchEvent(event);
-
-                movePosition = e.pageX;
-                // Move with da finga
-                $(event.data.instance.element).css('left', (touchLeft - (startPosition - movePosition) ) + 'px' );
-
-                return false; 
-            });
-
-            $(this.element).bind('touchend', {instance: this}, function(event){
-                var e = getTouchEvent(event);
-
-                endPosition = e.pageX;
-
-                touchCompletionTime = new Date() - startTouchTime;
-                var fastSwipe = false;
-
-                // if swipe in less than 400 ms
-                if (touchCompletionTime < 400){
-                    if(Math.abs(startPosition - endPosition) > 5){
-                        fastSwipe = true;
-                    }
-
-                }
-
-
-                // work out if move grater than threshold, and in which direction
-                if ( (Math.abs(startPosition - endPosition) > ( event.data.instance.options.paneWidth / 3 ) ) || fastSwipe){
-                    if (endPosition > startPosition){
-                        event.data.instance.move('left', 1, true);
-                    }else{
-                        event.data.instance.move('right', 1, true);
-                    }
-                    if (event.data.instance.options.autoMove){
-                        clearInterval(galleryTimeout); 
-                    }
-                    endPosition = 0;
-                    startPosition = 0;
-                }else{
-                    touchPaneReset(event.data.instance);
-                }
-                return false; 
-            });
-
+            
+            this.addTouchSupport(this.element);
+            
+            // touch support or the thumbnails
+            if (this.options.thumbnails){
+                this.addTouchSupport( '#'+this.options.thumbnails);
+            }
         }
 
     };
+    
+    // function for touch support
+    Plugin.prototype.addTouchSupport = function(element){
+        
+        var startPosition = 0;
+        var endPosition = 0;
+        var touchLeft = 0;
+
+        // timer to work out how long the touch event occurred 
+        var startTouchTime = null;
+        var touchCompletionTime = null;
+
+        // touch start for the main gallery
+        $(element).bind('touchstart', function(event){
+            var e = getTouchEvent(event)
+            startTouchTime = new Date();
+            startPosition = e.pageX;
+            touchLeft = parseInt($(element).css('left').replace('px', ''));
+            if ( $(element).is(':animated') ) {
+                $(element).stop(true);
+            }
+            return false; 
+        });
+
+        // move for the gallery
+        $(element).bind('touchmove', function(event){
+            var e = getTouchEvent(event);
+            var movePosition = e.pageX;
+            // Move with da finga
+            $(element).css('left', (touchLeft - (startPosition - movePosition) ) + 'px' );
+            return false; 
+        });
+
+
+        // touch end for the gallery
+        $(element).bind('touchend', {instance:this}, function(event){
+            var e = getTouchEvent(event);
+            endPosition = e.pageX;
+            touchCompletionTime = new Date() - startTouchTime;
+            var fastSwipe = false;
+            // if swipe in less than 400 ms
+            if (touchCompletionTime < 400){
+                if(Math.abs(startPosition - endPosition) > 5){
+                    fastSwipe = true;
+                }
+            }
+            // work out if move grater than threshold, and in which direction
+            if ( (Math.abs(startPosition - endPosition) > ( event.data.instance.paneWidth / 3 ) ) || fastSwipe){
+                if (endPosition > startPosition){
+                    event.data.instance.move('left', 1, true);
+                }else{
+                    event.data.instance.move('right', 1, true);
+                }
+                if (event.data.instance.options.autoMove){
+                    clearInterval(event.data.instance.galleryTimeout); 
+                }
+                endPosition = 0;
+                startPosition = 0;
+            }else{
+                touchPaneReset(this);
+            }
+            return false; 
+        });
+    }
 
     $.fn[pluginName] = function ( options ) {
         return this.each(function () {
@@ -231,47 +268,51 @@
         if(typeof(direction)==='undefined') direction = 'right';
         if(typeof(touch)==='undefined') touch = false;
         
-        // Get width of the thumb including margin (true)
-        var totalThumbs = $('#'+this.options.thumbnails).children().length;
-        var thumbWidth = $('#'+this.options.thumbnails).children(0).outerWidth(true);
-        var amountPerPane = Math.floor(this.options.paneWidth / thumbWidth);
-        
-        // How many 'large' panes do we now have
-        var amountLargePanes = Math.ceil(totalThumbs / amountPerPane);
-        var currentLeft = parseInt($('#'+this.options.thumbnails).css('left'));
-        
-        
-        var currentPane = Math.abs(currentLeft / (thumbWidth * amountPerPane)) + 1;
+        // Get current left
+        var currentLeft = ( ( this.thumbWidth * this.thumbsPerPane) * (this.thumbIndex - 1)) * -1;
         
         if(direction == 'right'){
             
             // check if we can move
-            if ( currentPane < amountLargePanes){
-                $('#'+this.options.thumbnails).stop().animate(
-                    {left: currentLeft - ( thumbWidth * amountPerPane)},
-                    {queue:false, duration:300}
-                )
+            if ( this.thumbIndex < this.amountThumbPanes){
+                $('#'+this.options.thumbnails).animate({
+                    left: currentLeft - ( this.thumbWidth * this.thumbsPerPane)
+                }, this.options.speed, function() {
+                });
+                this.thumbIndex ++;
             }else{
-                $('#'+this.options.thumbnails).stop().animate(
-                    {left: 0},
-                    {queue:false, duration:300}
-                )
+                if (!touch){
+                     $('#'+this.options.thumbnails).animate({
+                    left: 0
+                    }, this.options.speed, function(){ 
+                    });
+                    this.thumbIndex = 1;
+                }else{
+                    touchPaneReset(this, true);
+                }
+               
             }
         }
         
         if(direction == 'left'){
             
             // check if we can move
-            if ( currentLeft != 0){
-                $('#'+this.options.thumbnails).animate(
-                    {left: currentLeft + ( thumbWidth * amountPerPane)},
-                    {queue:false, duration:300}
-                )
+            if ( this.thumbIndex != 1){
+                $('#'+this.options.thumbnails).animate({
+                   left: currentLeft + ( this.thumbWidth * this.thumbsPerPane)
+                }, this.options.speed, function() {
+                });     
+                this.thumbIndex --;
             }else{
-                $('#'+this.options.thumbnails).animate(
-                    {left: ((thumbWidth * amountPerPane) * (amountLargePanes - 1)) * -1},
-                    {queue:false, duration:300}
-                )
+                if (!touch){
+                    $('#'+this.options.thumbnails).animate({
+                    left: ((this.thumbWidth * this.thumbsPerPane) * (this.amountThumbPanes - 1)) * -1
+                    }, this.options.speed, function() {
+                    });    
+                    this.thumbIndex = this.amountThumbPanes;
+               }else{
+                   touchPaneReset(this, true);
+               }
             }
             
         }
@@ -287,20 +328,20 @@
         if(typeof(multiplier)==='undefined') multiplier = 1;
         if(typeof(touch)==='undefined') touch = false;
 
-        var currentLeft = (this.options.paneWidth * (this.options.currentIndex - 1)) * -1;
+        var currentLeft = (this.paneWidth * (this.currentIndex - 1)) * -1;
 
         // Handle right click
         if (direction == 'right'){
 
             // can we move right?
-            if( this.options.currentIndex < this.options.amountItems){
+            if( this.currentIndex < this.amountItems){
 
                 if (this.options.fade){
 
-                    this.fadeItem(this.options.currentIndex + (1 * multiplier));
+                    this.fadeItem(this.currentIndex + (1 * multiplier));
                 }else{
                     $(this.element).animate({
-                        left: currentLeft - ( this.options.paneWidth * multiplier) 
+                        left: currentLeft - ( this.paneWidth * multiplier) 
                     }, this.options.speed, function() {
 
                         //$(settings.wrapper).find('li:first').before($(settings.wrapper).find('li:last'));
@@ -308,7 +349,7 @@
 
                     });
                 }
-                this.options.currentIndex = this.options.currentIndex + (1 * multiplier);
+                this.currentIndex = this.currentIndex + (1 * multiplier);
 
             }else{
                 // cant move right so reset the gallery at the start
@@ -322,7 +363,7 @@
                         });
                     }
 
-                    this.options.currentIndex = 1;
+                    this.currentIndex = 1;
                 }else{
                     touchPaneReset(this);
                 }
@@ -333,31 +374,31 @@
         if (direction == 'left'){
 
             // can we move left?
-            if( this.options.currentIndex != 1){
+            if( this.currentIndex != 1){
 
                 if (this.options.fade){
 
-                    this.fadeItem(this.options.currentIndex - (1 * multiplier));
+                    this.fadeItem(this.currentIndex - (1 * multiplier));
 
                 }else{
                     $(this.element).animate({
-                        left: currentLeft + (this.options.paneWidth * multiplier)
+                        left: currentLeft + (this.paneWidth * multiplier)
                     }, this.options.speed, function() {
                     }); 
                 }
-                this.options.currentIndex = this.options.currentIndex - (1 * multiplier)
+                this.currentIndex = this.currentIndex - (1 * multiplier)
             }else{
 
                 if(!touch){
                     if(this.options.fade){
-                        this.fadeItem(this.options.amountItems);
+                        this.fadeItem(this.amountItems);
                     }else{
                         $(this.element).animate({
-                            left: ( (this.options.amountItems -1) * this.options.paneWidth) - (( (this.options.amountItems - 1) * this.options.paneWidth) * 2)
+                            left: ( (this.amountItems -1) * this.paneWidth) - (( (this.amountItems - 1) * this.paneWidth) * 2)
                         }, this.options.speed, function() {
                         });
                     }
-                    this.options.currentIndex = this.options.amountItems;
+                    this.currentIndex = this.amountItems;
                 }else{
                     touchPaneReset(this);
                 }
@@ -368,7 +409,7 @@
         if (this.options.thumbnails){
             var currentActiveThumb = $('#'+this.options.thumbnails).find('.active');
             $(currentActiveThumb).removeClass('active');
-            $('#'+this.options.thumbnails).find('li').eq((this.options.currentIndex - 1)).addClass('active');
+            $('#'+this.options.thumbnails).find('li').eq((this.currentIndex - 1)).addClass('active');
         }
     } // End of the move function
     
@@ -395,11 +436,23 @@
     }
 
 
-    function touchPaneReset(instance){
-        // tween pane back to where it was before the finger move!
-        $(instance.element).animate({
-            left: (instance.options.paneWidth * (instance.options.currentIndex - 1)) * -1 
-        }, 300);
+    function touchPaneReset(instance, thumbs){
+        if(typeof(thumbs)==='undefined') thumbs = false;
+        if (!thumbs){
+            // tween pane back to where it was before the finger move!
+            $(instance.element).animate({
+                left: (instance.paneWidth * (instance.currentIndex - 1)) * -1 
+            }, 300);
+        }else{
+            //double check 
+            if (instance.options.thumbnails){
+                $('#'+instance.options.thumbnails).animate({
+                    left: ((this.thumbWidth * this.thumbsPerPane) * (this.thumbIndex - 1)) * -1
+                }, 300);
+                
+            } //end if options set
+        }// end if flag passed
+        
 
     }
 
