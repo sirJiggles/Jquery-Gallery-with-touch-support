@@ -1,7 +1,8 @@
-Jquery Gallery with touch support
+Responsive JQuery gallery with touch support
 =================================
 
-Simple JQuery gallery plugin. uses pane width to detect slide position so can use on gallery that has percent width.
+Easy to use jquery gallery plugin, minimal HTML required, fully responsive, touch screen supported, very customisable 
+and well documented!
 
 Example usage
 =================================
