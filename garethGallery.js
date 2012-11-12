@@ -20,7 +20,11 @@
             thumbLeft   : 'thumbnail-left',
             thumbRight  : 'thumbnail-right',
             fade        : false,
-            swapImages  : false
+            swapImages  : false,
+            progressBar : false,
+            autoMoveSpeed: 4000,
+            swapWidth : 550,
+            swapHeight: 550
         };
 
     // The actual plugin constructor
@@ -62,7 +66,7 @@
             
             //check to swap the images
             if(event.data.instance.swapImages){
-                if (($(this).height() > 550) && ($(this).width() > 550)){
+                if (($(this).height() > event.data.instance.options.swapHeight) && ($(this).width() > event.data.instance.options.swapWidth)){
                     // swap images set flag
                     event.data.instance.swapImages();
                 }
@@ -71,7 +75,30 @@
         });
         
         if (this.options.autoMove){
-            this.galleryTimeout = setInterval(function(){instance.move();}, 4000);
+            // If they want to update the width of an element using the progress bar
+            if (this.options.progressBar){
+                // run once to start with
+                $("#"+instance.options.progressBar).animate( 
+                        {width: "100%"}, 
+                        instance.options.autoMoveSpeed,
+                        function(){
+                        $("#"+instance.options.progressBar).css('width', '0%');
+                    }
+                );
+                // start the timer
+                this.galleryTimeout = setInterval(function(){
+                    $("#"+instance.options.progressBar).animate( 
+                        {width: "100%"}, 
+                        instance.options.autoMoveSpeed,
+                        function(){
+                            $("#"+instance.options.progressBar).css('width', '0%');
+                        }
+                    );
+                    instance.move();
+                }, instance.options.autoMoveSpeed);
+            }else{
+                this.galleryTimeout = setInterval(function(){instance.move();}, instance.options.autoMoveSpeed);
+            }
         }
         
         var resizeDone = 0;
@@ -80,15 +107,15 @@
         $(window).bind('resize', {instance:this}, function(event){
 
             // Adjust image widths (for first load)
-            $(event.data.instance.element).find('img').css('width', $(event.data.instance.element).parent().width());
+            $(event.data.instance.element).children().css('width', $(event.data.instance.element).parent().width());
+            //$(event.data.instance.element).find('img').css('width', $(event.data.instance.element).parent().width());
 
             // change the pane width
             event.data.instance.paneWidth = $(event.data.instance.element).parent().width();
             
             // clear the timer
-            if (event.data.instance.options.autoMove){
-                clearInterval(event.data.instance.galleryTimeout); 
-            }
+            event.data.instance.clearGalleryTimeout();
+           
             // reset the main gallery (and curent index)
             if (event.data.instance.options.fade){
                 // have to try to do the fade-reset after a certain amount of time
@@ -120,7 +147,7 @@
             // Image swapping
             if(event.data.instance.swapImages){
                 if (!event.data.instance.imagesSwapped){
-                    if (($(this).height() > 550) && ($(this).width() > 550)){
+                    if (($(this).height() > event.data.instance.options.swapHeight) && ($(this).width() > event.data.instance.options.swapWidth)){
                         // swap images set flag
                         event.data.instance.swapImages();
                     }
@@ -137,7 +164,7 @@
     Plugin.prototype.init = function () {
         
         // Adjust image widths (for first load)
-        $(this.element).find('img').css('width', $(this.element).parent().width());
+        $(this.element).children().css('width', $(this.element).parent().width());
 
         // change the pane width
         this.paneWidth = $(this.element).parent().width();
@@ -147,17 +174,13 @@
 
         // Add click events for the next and previous buttons
         $('#'+this.options.leftButton).bind('click', {instance: this}, function(event){
-            if (event.data.instance.options.autoMove){
-                clearInterval(event.data.instance.galleryTimeout); 
-            }
+            event.data.instance.clearGalleryTimeout();
             event.data.instance.move('left');
             return false;
 
         });
         $('#'+this.options.rightButton).bind('click', {instance: this}, function(event){
-            if (event.data.instance.options.autoMove){
-                clearInterval(event.data.instance.galleryTimeout); 
-            }
+            event.data.instance.clearGalleryTimeout();
             event.data.instance.move('right');
             return false;
         });
@@ -173,7 +196,7 @@
             // Thumbnail clicking
             $('#'+this.options.thumbnails).find('a').bind('click', {instance: this}, function(event){
 
-                window.clearInterval(event.data.instance.galleryTimeout); 
+                event.data.instance.clearGalleryTimeout();
 
                 var currentActive = $(this).parent().parent().find('.active');
                 
@@ -193,17 +216,13 @@
             
             // Thumbnail next and previous button clicking
             $('#'+this.options.thumbLeft).bind('click', {instance: this}, function(event){
-                if (event.data.instance.options.autoMove){
-                    clearInterval(event.data.instance.galleryTimeout); 
-                }
+                event.data.instance.clearGalleryTimeout();
                 event.data.instance.moveThumbs('left');
                 return false;
 
             });
             $('#'+this.options.thumbRight).bind('click', {instance: this}, function(event){
-                if (event.data.instance.options.autoMove){
-                    clearInterval(event.data.instance.galleryTimeout); 
-                }
+               event.data.instance.clearGalleryTimeout();
                 event.data.instance.moveThumbs('right');
                 return false;
             });
@@ -299,9 +318,8 @@
                     }else{
                         event.data.instance.move('right', 1, true);
                     }
-                    if (event.data.instance.options.autoMove){
-                        clearInterval(event.data.instance.galleryTimeout); 
-                    }
+                    event.data.instance.clearGalleryTimeout();
+                    
                     endPosition = 0;
                     startPosition = 0;
                 }else{
@@ -315,9 +333,7 @@
                     }else{
                         event.data.instance.moveThumbs('right', true);
                     }
-                    if (event.data.instance.options.autoMove){
-                        clearInterval(event.data.instance.galleryTimeout); 
-                    }
+                    event.data.instance.clearGalleryTimeout();
                     endPosition = 0;
                     startPosition = 0;
                 }else{
@@ -339,6 +355,17 @@
                 new Plugin( this, options ));
             }
         });
+    }
+    
+    // Function to clear the timeout for automove (as this is called so many times)
+    Plugin.prototype.clearGalleryTimeout = function(){
+        if (this.options.autoMove){
+            clearInterval(this.galleryTimeout);
+            if (this.options.progressBar){
+                $("#"+this.options.progressBar).stop();
+                $("#"+this.options.progressBar).css('width', '0%');
+            }
+        }
     }
     
     // The move thumbs function (move the thumbnail navigation left / right)
