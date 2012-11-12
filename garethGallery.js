@@ -293,11 +293,8 @@
                 var movePosition = e.pageX;
                 // Move with da finga
                 $(element).css('left', (touchLeft - (startPosition - movePosition) ) + 'px' );
-               
-                // cannot prvent default on thumbs, this stops click event!
-                if (!thumbs){
-                    return false; 
-                }
+                return false; 
+                
             });
         }
 
@@ -346,10 +343,7 @@
                 }
                 
             }
-            // cannot prvent default on thumbs, this stops click event!
-            if (!thumbs){
-                return false; 
-            }
+            return false; 
         });
     }
 
