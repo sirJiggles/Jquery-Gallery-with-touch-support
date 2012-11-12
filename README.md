@@ -38,7 +38,11 @@ Arguments
 <li><strong>thumbLeft</strong> - string id of the thumbnail move left button</li>
 <li><strong>thumbRight</strong> - string id of the thumbnail move right button</li>
 <li><strong>fade</strong> - boolean, default false, use to have fading gallery</li>
-<li><strong>swapImages</strong> - boolean, default false, use to swap images at 500 x 500 or more on load or resize. use 'data-high-res' attr on image tag. the value should be the high res version of the image</li>
+<li><strong>swapImages</strong> - boolean, default false, use to swap images at 550 x 550 or more on load or resize. use 'data-high-res' attr on image tag. the value should be the high res version of the image</li>
+<li><strong>progressBar</strong> - default false, a string that is the id of the div to increase percentage of as automove progresses</li>
+<li><strong>autoMoveSpeed</strong> - default 4000, how fast to do auto move of gallery</li>
+<li><strong>swapWidth</strong> - default 550 for the width of screen before responsive swapping</li>
+<li><strong>swapHeight</strong> - default 500 for the height of the screen before responsive swapping</li>
 </ul>
 
 Example with argument change
