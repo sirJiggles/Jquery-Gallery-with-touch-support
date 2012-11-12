@@ -72,6 +72,64 @@
                 }
             }
             
+            var resizeDone = 0;
+        
+            // on resize reset the gallery
+            $(window).bind('resize', {instance:instance}, function(event){
+
+                // Adjust image widths (for first load)
+                $(event.data.instance.element).children().css('width', $(event.data.instance.element).parent().width());
+                //$(event.data.instance.element).find('img').css('width', $(event.data.instance.element).parent().width());
+
+                // change the pane width
+                event.data.instance.paneWidth = $(event.data.instance.element).parent().width();
+
+                // clear the timer
+                event.data.instance.clearGalleryTimeout();
+
+                // reset the main gallery (and curent index)
+                if (event.data.instance.options.fade){
+                    // have to try to do the fade-reset after a certain amount of time
+                    clearTimeout(resizeDone);
+                    resizeDone = setTimeout(function(){instance.fadeItem();}, 1500);
+                }else{
+                    $(event.data.instance.element).css('left', 0);
+                }
+                event.data.instance.currentIndex = 1;
+
+                // reset thumbnails
+                if (event.data.instance.options.thumbnails){
+
+                    event.data.instance.thumbIndex = 1;
+                    $('#'+event.data.instance.options.thumbnails).css('left', 0);
+
+                    // reset the active state
+                    $('#'+event.data.instance.options.thumbnails).find('.active').removeClass('active');
+                    $('#'+event.data.instance.options.thumbnails).find('li').eq(0).addClass('active');
+
+                    // re-calculate the thumbnail params!
+                    event.data.instance.thumbWidth = $('#'+event.data.instance.options.thumbnails).children(0).outerWidth(true);
+                    event.data.instance.thumbsPerPane = Math.floor($('#'+event.data.instance.options.thumbnails).parent().width() / event.data.instance.thumbWidth);
+                    // How many 'large' panes do we now have
+                    event.data.instance.amountThumbPanes = Math.ceil(event.data.instance.totalThumbs / event.data.instance.thumbsPerPane);
+
+                }
+
+                // Image swapping
+                if(event.data.instance.swapImages){
+                    if (!event.data.instance.imagesSwapped){
+                        if (($(this).height() > event.data.instance.options.swapHeight) && ($(this).width() > event.data.instance.options.swapWidth)){
+                            // swap images set flag
+                            event.data.instance.swapImages();
+                        }
+                    }
+                }
+
+            });
+            
+            
+            
+            
         });
         
         if (this.options.autoMove){
@@ -101,60 +159,7 @@
             }
         }
         
-        var resizeDone = 0;
         
-        // on resize reset the gallery
-        $(window).bind('resize', {instance:this}, function(event){
-
-            // Adjust image widths (for first load)
-            $(event.data.instance.element).children().css('width', $(event.data.instance.element).parent().width());
-            //$(event.data.instance.element).find('img').css('width', $(event.data.instance.element).parent().width());
-
-            // change the pane width
-            event.data.instance.paneWidth = $(event.data.instance.element).parent().width();
-            
-            // clear the timer
-            event.data.instance.clearGalleryTimeout();
-           
-            // reset the main gallery (and curent index)
-            if (event.data.instance.options.fade){
-                // have to try to do the fade-reset after a certain amount of time
-                clearTimeout(resizeDone);
-                resizeDone = setTimeout(function(){instance.fadeItem();}, 1500);
-            }else{
-                $(event.data.instance.element).css('left', 0);
-            }
-            event.data.instance.currentIndex = 1;
-            
-            // reset thumbnails
-            if (event.data.instance.options.thumbnails){
-                
-                event.data.instance.thumbIndex = 1;
-                $('#'+event.data.instance.options.thumbnails).css('left', 0);
-                
-                // reset the active state
-                $('#'+event.data.instance.options.thumbnails).find('.active').removeClass('active');
-                $('#'+event.data.instance.options.thumbnails).find('li').eq(0).addClass('active');
-                
-                // re-calculate the thumbnail params!
-                event.data.instance.thumbWidth = $('#'+event.data.instance.options.thumbnails).children(0).outerWidth(true);
-                event.data.instance.thumbsPerPane = Math.floor($('#'+event.data.instance.options.thumbnails).parent().width() / event.data.instance.thumbWidth);
-                // How many 'large' panes do we now have
-                event.data.instance.amountThumbPanes = Math.ceil(event.data.instance.totalThumbs / event.data.instance.thumbsPerPane);
-                
-            }
-            
-            // Image swapping
-            if(event.data.instance.swapImages){
-                if (!event.data.instance.imagesSwapped){
-                    if (($(this).height() > event.data.instance.options.swapHeight) && ($(this).width() > event.data.instance.options.swapWidth)){
-                        // swap images set flag
-                        event.data.instance.swapImages();
-                    }
-                }
-            }
-            
-        });
 
          // Run that bad boy
         this.init();
