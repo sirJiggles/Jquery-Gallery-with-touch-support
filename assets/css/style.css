@@ -1,0 +1,447 @@
+/* 
+    Document   : style
+    Author     : Gareth Fuller
+    Description: main stylesheet
+    @author Garteth Fuller
+*/
+
+body{
+    background-color:#272727;
+    /* Base font size */
+    font-size:13px;
+    font-family:Arial, Helvetica,sans-serif;
+}
+
+
+/*========= MAIN WRAPPER (CENTER CONTENT) ==========*/
+
+#content{
+    margin:0 auto;
+    max-width: 570px;
+    width:90%;
+    padding:0 5% 0 5%;
+}
+
+
+/*================ GENERAL TYPOGRAPHY =================*/
+
+h1,h2,h3{
+    font-family:"Segoe UI Web Light","Segoe UI Light","Segoe UI Web Regular","Segoe UI","Segoe UI Symbol","Helvetica Neue",Arial!important;
+}
+
+
+h2{
+    color:#20a5f1;
+    display:inline-block;
+    font-size:1.846em;
+    font-weight: normal;
+    float:left;
+    margin:15px 0 15px 0;
+    width:100%;
+    background:url('/assets/img/border-slice.png') repeat-x 0 100%;
+    padding:0 0 10px 0;
+}
+
+h1{
+    color:#fff;
+    font-size:2.769em;
+    display:inline-block;
+    font-weight: normal;
+    margin:20px 0 20px 0;
+}
+
+h3{
+    color:#20a5f1;
+    font-size:1.385em;
+    font-weight: normal; 
+    margin:0 0 20px 0;
+    padding:0 0 20px 0;
+    
+    width:100%;
+}
+
+p{
+    color:#ddd;
+    font-size:1.077em;
+    margin:0 0 15px 0;
+    line-height:1.3em;
+}
+
+a{
+    color:#209DE4;
+    text-decoration: none;
+}
+
+section{
+    margin:0 0 20px 0;
+    display:block;
+    float:left;
+    width:100%;
+}
+
+/*====== STYLES FOR ALL GALLERY EXAMPLES ========*/
+
+.gallery-example{
+    box-shadow: 0px 10px 25px #000;
+    width:563px;
+    float:left;
+}
+
+.gallery-example img{
+    outline:none;
+}
+
+.gallery-example a{
+    outline:none;
+    text-decoration:none;
+}
+
+.thumbnails{
+   float:left;
+   margin:15px 0 10px 0;
+}
+
+.thumbnails li{
+    float:left;
+    margin:0 5px 0 0;
+}
+
+.thumbnails li a{
+    display:block;
+}
+
+.thumbnails li.active{
+    filter: alpha(opacity=50);
+    opacity:0.5;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    background-color:#272727;
+    
+}
+
+
+
+/*=========== GALLERY EXAMPLE ONE =============*/
+
+#gallery{
+    overflow:hidden;
+    position:relative;
+    width:563px;
+}
+
+#gallery ul{
+    width:10000px;
+    position:relative;
+    left:0;
+    float:left
+}
+
+#gallery ul li{
+    float:left;
+}
+
+#gallery ul li img{
+    width:100%;
+}
+
+
+/*============GALLERY EXAMPLE TWO==============*/
+
+#gallery-thumbs{
+    overflow:hidden;
+    position:relative;
+    width:100%;
+}
+
+#gallery-thumbs ul{
+    width:10000px;
+    position:relative;
+    left:0;
+    float:left
+}
+
+#gallery-thumbs ul li{
+    float:left;
+}
+
+#gallery-thumbs ul li img{
+    width:100%;
+}
+
+#thumbnails-wrapper{
+    overflow:hidden;
+    position:relative;
+    width:100%;
+}
+
+#thumbnails-wrapper ul{
+    width:10000px;
+    position:relative;
+    left:0;
+    float:left
+    
+}
+
+/*============== GALLERY EXAMPLE THREE ================*/
+
+#gallery-thumbs-fade{
+    overflow:hidden;
+    position:relative;
+    width:100%;
+}
+
+#gallery-thumbs-fade ul{
+    width:10000px;
+    position:relative;
+    left:0;
+    float:left
+}
+
+#gallery-thumbs-fade ul li{
+    float:left;
+}
+#gallery-thumbs-fade ul li img{
+    width:100%;
+}
+
+
+#thumbnails-wrapper-fade{
+    overflow:hidden;
+    position:relative;
+    width:100%;
+}
+
+#thumbnails-wrapper-fade ul{
+    width:10000px;
+    position:relative;
+    left:0;
+    float:left
+    
+}
+
+
+/*============ GALLERY EXAMPLE FIVE ===============*/
+
+
+#gallery-complex,
+#gallery-multi{
+    overflow:hidden;
+    position:relative;
+    width:100%;
+    background: #333;
+    border: 1px solid #555;
+}
+
+#gallery-complex ul,
+#gallery-multi ul{
+    width:90000px;
+    position:relative;
+    left:0;
+    float:left
+}
+
+#gallery-complex ul li,
+#gallery-multi ul li{
+    float:left;
+}
+
+#gallery-complex ul li header,
+#gallery-multi ul li header{
+    width:25%;
+    float:left;
+}
+
+#gallery-complex ul li h3,
+#gallery-multi ul li h3{
+    display:block;
+    float:left;
+    padding:0;
+    margin:20px 10% 20px 10%;
+    width:80%;
+    color:white;
+    font-weight: 700;
+    font-size:1.4em;
+}
+#gallery-complex ul li figure,
+#gallery-multi ul li figure{
+    width:75%;
+    float:left;
+    margin:0;
+}
+
+
+#gallery-complex ul li figure img,
+#gallery-multi ul li figure img{
+    width:100%;
+}
+
+#gallery-complex figcaption,
+#gallery-multi figcaption{
+    margin: 10px 0px 10px 0;
+    color: white;
+    background-color: #222;
+    padding: 10px;
+    font-weight: 400;
+}
+
+#thumbnails-wrapper-complex{
+    overflow:hidden;
+    position:relative;
+    width:100%;
+}
+
+#thumbnails-wrapper-complex ul{
+    width:10000px;
+    position:relative;
+    left:0;
+    float:left
+    
+}
+
+.progress-bar{
+    width:100%;
+    display:block;
+    float:left
+    
+}
+
+.progress-bar .status{
+    width:0%;
+    background-color:#209DE4;
+    height:2px;
+}
+
+/*======== GALLERY EXAMPLE SIX ==========*/
+
+
+#thumbnails-wrapper-multi{
+    width:86%;
+    height:86%;
+    background:#999;
+    position:absolute;
+    top:0;
+    left:0;
+    z-index:3;
+    margin:0;
+    padding:7%;
+    opacity:0.9;
+  
+}
+
+.relative-wrapper{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    display:block;
+    float:left;
+}
+
+#thumbnails-wrapper-multi ul li{
+    margin:0;
+}
+
+
+#thumbnails-wrapper-multi ul li ul li,
+#thumbnails-wrapper-multi ul li ul{
+    width:auto;
+    height:auto;
+}
+
+#thumbnails-wrapper-multi ul li ul li{
+    margin:0 10px 0 0;
+}
+
+#view-thumbs{
+    margin:30px 0 10px 0;
+    font-size:1.4em;
+    display:block;
+    float:left;
+}
+
+#pageNum,
+#pageNumThumbs{
+    font-size:1.2em;
+}
+
+#pageNum{
+    float:right;
+    color:white;
+    margin:30px 0 10px 0;
+}
+
+#pageNumThumbs{
+    color: #209DE4;
+    padding:2px;
+    background-color:#272727;
+    position: relative;
+    bottom: 15px;
+    margin: 0;
+    z-index: 600;
+    left:42%;
+    display:inline-block;
+}
+
+
+/*============ NEXT AND PREVIOUS BUTTONS ALL GALLERYS ========*/
+
+a.gallery-buttons,
+a.gallery-buttons-thumbs{
+    width:20px;
+    height:50px;
+    background-color:#272727;
+    outline:none;
+    text-decoration: none;
+    position:absolute;
+    display:block;
+    background:url('../img/gallery-arrows.gif') top left no-repeat;
+}
+
+a.gallery-buttons:hover,
+a.gallery-buttons-thumbs:hover{
+    outline:none;
+}
+
+a.gallery-buttons.next,
+a.gallery-buttons-thumbs.next{
+    top: 40%;
+    right:-1px;
+    background-position:-19px 0;
+}
+
+a.gallery-buttons.previous,
+a.gallery-buttons-thumbs.previous{
+    top:40%;
+    left:0;
+}
+
+a.gallery-buttons-thumbs.next,
+a.gallery-buttons-thumbs.previous{
+    top:15%;
+}
+
+/* NEXT PREVIOUS FOR MULTI LINE THUMBS */
+#thumbnails-wrapper-multi a.gallery-buttons-thumbs.next,
+#thumbnails-wrapper-multi a.gallery-buttons-thumbs.previous{
+    top:42%;
+}
+
+/* RESPONSIVE SHIZZ NIZZ */
+
+@media only screen and (max-width: 870px) and (min-width: 500px) {
+
+    #gallery,
+    #gallery-thumbs{
+        width:100%;
+    }
+}
+
+@media only screen and (max-width: 499px) {
+
+    #gallery,
+    #gallery-thumbs{
+        width:100%;
+    }
+    
+    .gallery-example a.gallery-buttons{
+        display:none;
+    }
+}
